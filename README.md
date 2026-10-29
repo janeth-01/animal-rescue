@@ -15,18 +15,19 @@ The React Compiler is not enabled on this template because of its impact on dev 
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
 
-## NEHOSA donations and Selcom setup
+## NEHOSA donations and Pesapal setup
 
-The donation form currently collects a selected amount, frequency and optional donor details in the browser only. Its payment button is intentionally disabled. No donor details are sent or stored and no payment is processed.
+The donation form currently collects the amount, frequency and optional donor details in the browser only. The payment button remains disabled. No donor details are sent or stored and no payment is processed.
 
-The backend integration point is `POST /api/donations/checkout` in `server/server.js`. It currently returns HTTP 503 until checkout is configured. When connecting Selcom, implement the server-side checkout request there (or in a dedicated payment module) and have the browser submit the donation to that endpoint. The server must create the transaction, return only the provider's checkout URL or supported next step, and verify payment status using Selcom's server-to-server callback/status mechanism before marking a donation paid.
+The backend integration point is `POST /api/donations/checkout` in `server/server.js`. It returns HTTP 503 until Pesapal checkout is configured. The Pesapal merchant credentials must stay on the server and must never be added to browser code or `VITE_*` variables.
 
-Before enabling checkout, obtain and configure these items from the NEHOSA Selcom merchant account:
+Before connecting checkout, NEHOSA needs a Pesapal business/merchant account with API 3.0 access and:
 
-- Merchant/vendor identifier and API credentials required by the assigned Selcom product. Keep secrets on the server in environment variables, never in Vite `VITE_*` variables or browser code.
-- Selcom environment and API base URL (sandbox first, then production).
-- Supported payment methods and currency/amount rules for the account, including confirmation that TZS is enabled.
-- Public HTTPS success, cancellation and server callback/notification URLs, plus any signing or IP allowlist requirements Selcom provides.
-- NEHOSA's official donation contact and privacy/receipt wording for donor confirmations.
+- Sandbox and production consumer key and consumer secret.
+- A stable public HTTPS callback URL and IPN notification URL. Register the IPN URL with Pesapal and save the returned notification ID.
+- Confirmation that TZS and the desired payment methods (local mobile money and international cards, if enabled for the account) are active.
+- Official NEHOSA contact and receipt/privacy wording.
 
-After configuration, enable the frontend submit action to call `POST /api/donations/checkout` with amount in TZS, frequency, donor contact details and a server-generated unique reference. Add request validation, idempotency, callback signature verification, transaction persistence, and clear success/failure return handling before accepting real payments. Do not trust the browser return URL alone as proof of payment.
+The planned server flow is: authenticate to Pesapal, create a unique donation order, redirect the donor to the returned Pesapal checkout URL, then use Pesapal's transaction-status API after callback/IPN notifications. Do not treat a browser redirect or notification by itself as proof that a donation was paid. Add validation, idempotency and durable transaction records before going live. Monthly donations require separate recurring-payment setup and must not be promised until Pesapal confirms it for the merchant account.
+
+Use `server/.env.example` as a variable-name template. Create a private `server/.env` for real credentials after receiving them; do not commit it. The server endpoint remains disabled until the integration is implemented and verified in Pesapal sandbox.

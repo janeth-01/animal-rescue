@@ -25,11 +25,12 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Selcom checkout integration point. Keep this route disabled until the
-// merchant account, credentials, callback URLs and payment verification are configured.
+// Pesapal checkout integration point. Keep this route disabled until the
+// merchant account, credentials, IPN/callback URLs and payment verification are configured.
 app.post("/api/donations/checkout", (req, res) => {
   res.status(503).json({
     status: "unavailable",
+    provider: "Pesapal",
     message: "Online donations are not configured yet."
   });
 });
