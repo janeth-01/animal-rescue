@@ -14,7 +14,7 @@ import {
   CreditCard,
   Check,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import saferFutureImage from "./assets/mkitten.jpeg";
 import aboutImage from "./assets/streetdog.jpeg";
 import rescueImage from "./assets/blackdog.jpeg";
@@ -116,7 +116,7 @@ function getWorkFromLocation() {
   return detailPages.find((item) => item.slug === slug) ?? null;
 }
 
-function WorkDetailPage({ work }) {
+function WorkDetailPage({ work, onAction }) {
   return (
     <section className="section work-detail-section">
       <div className="container">
@@ -131,7 +131,7 @@ function WorkDetailPage({ work }) {
             <ul>{work.focusAreas.map((focus) => <li key={focus}>{focus}</li>)}</ul>
             <p className="work-detail-note">{work.detailNote ?? "These are current focus areas; activities depend on available resources and community needs."}</p>
             <div className="work-detail-actions">
-              <a className="button button-primary" href={work.actionHref ?? "/#donate"}>{work.actionType === "contact" ? <HandHeart size={17} /> : <Heart size={17} />} {work.actionLabel ?? "Donate to NEHOSA"}</a>
+              <a className="button button-primary" href={work.actionHref ?? "/#donate"} onClick={(event) => onAction(event, work.actionHref ?? "/#donate")}>{work.actionType === "contact" ? <HandHeart size={17} /> : <Heart size={17} />} {work.actionLabel ?? "Donate to NEHOSA"}</a>
               <a className="work-detail-home" href="/#home">Return to home</a>
             </div>
           </div>
@@ -147,10 +147,28 @@ function App() {
   const [donationAmount, setDonationAmount] = useState("25000");
   const [donationFrequency, setDonationFrequency] = useState("Once");
   const [selectedWork, setSelectedWork] = useState(getWorkFromLocation);
+  const pendingSection = useRef(null);
 
   const closeMenu = () => setMenuOpen(false);
 
   const pageLink = (section) => selectedWork ? `/#${section}` : `#${section}`;
+
+  const navigateFromDetail = (event, href) => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+    const target = new URL(href, window.location.origin);
+    if (target.origin !== window.location.origin || !target.hash) return;
+    event.preventDefault();
+    pendingSection.current = target.hash.slice(1);
+    window.history.pushState({}, "", `${target.pathname}${target.hash}`);
+    setSelectedWork(null);
+  };
+
+  useEffect(() => {
+    if (!selectedWork && pendingSection.current) {
+      document.getElementById(pendingSection.current)?.scrollIntoView({ behavior: "smooth" });
+      pendingSection.current = null;
+    }
+  }, [selectedWork]);
 
   const openWorkPage = (event, work) => {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
@@ -227,7 +245,7 @@ function App() {
 
       <main>
         {selectedWork ? (
-          <WorkDetailPage work={selectedWork} />
+          <WorkDetailPage work={selectedWork} onAction={navigateFromDetail} />
         ) : (
           <>
         <section className="hero" id="home">
@@ -506,7 +524,7 @@ function App() {
           <div className="footer-contact">
             <h3>Get in touch</h3>
             <p><MapPin size={17} /> Ilala, Dar Es Salaam, Tanzania</p>
-            <p><Mail size={17} /> Add your official email</p>
+            <p><Mail size={17} /> <a href="mailto:foryouthnewhope@gmail.com" style={{ color: "inherit" }}>foryouthnewhope@gmail.com</a></p>
             <p>
               <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M12.04 2C6.52 2 2.03 6.48 2.03 12c0 1.77.47 3.5 1.36 5.02L2 22l5.13-1.35A10 10 0 1 0 12.04 2Zm0 18.2h-.01a8.2 8.2 0 0 1-4.17-1.14l-.3-.18-3.04.8.81-2.96-.2-.31A8.2 8.2 0 0 1 4 12a8.03 8.03 0 1 1 8.04 8.2Zm4.43-6.15c-.24-.12-1.44-.71-1.66-.8-.22-.08-.38-.12-.54.13-.16.24-.62.79-.76.95-.14.16-.28.18-.52.06-.24-.12-1.02-.38-1.94-1.2-.72-.64-1.2-1.43-1.34-1.67-.14-.24-.02-.37.1-.49.1-.1.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.2-.47-.4-.4-.54-.41h-.46c-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2s.86 2.32.98 2.48c.12.16 1.68 2.56 4.07 3.59.57.25.81.4 1.1.51.46.15.87.13 1.2.08.38-.06 1.44-.59 1.64-1.15.2-.57.2-1.05.14-1.15-.06-.1-.22-.16-.46-.28Z" />
