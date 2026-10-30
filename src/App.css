@@ -954,6 +954,126 @@ img {
   font-size: 12px;
 }
 
+.payment-details {
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 110px;
+}
+
+
+.payment-details .donation-card-heading {
+  margin-bottom: 16px;
+}
+
+.payment-method-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.payment-method-option {
+  min-height: 43px;
+  padding: 8px 10px;
+  color: #46566b;
+  background: white;
+  border: 1px solid #dce3eb;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.payment-method-option:hover,
+.payment-method-option.selected {
+  color: var(--navy);
+  background: #f0f5fa;
+  border-color: var(--blue);
+  box-shadow: inset 0 0 0 1px var(--blue);
+}
+
+.payment-detail-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 15px;
+  background: #f7f9fc;
+  border: 1px solid #e4eaf0;
+  border-radius: 8px;
+}
+
+.payment-detail-panel-copy {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.payment-detail-panel-copy > strong {
+  color: var(--navy);
+  font-size: 13px;
+}
+
+.payment-detail-panel-copy p {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+.payment-detail-panel-copy span {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.payment-detail-panel-copy b {
+  color: #263b53;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.copy-payment-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px;
+  color: var(--navy);
+  background: #f0f5fa;
+  border: 1px solid #dce3eb;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.copy-payment-button:hover {
+  background: #edf3f9;
+}
+
+@media (max-width: 540px) {
+  .payment-method-options {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-detail-panel {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+.donation-enquiry-form {
+  padding-top: 23px;
+}
+
+.donation-enquiry-form .donation-card-heading {
+  margin-bottom: 17px;
+}
+
 .donation-card fieldset {
   padding: 0;
   margin: 0 0 22px;
@@ -1033,7 +1153,8 @@ img {
 }
 
 .amount-input-wrap input,
-.donor-fields input {
+.donor-fields input,
+.donor-fields textarea {
   width: 100%;
   min-height: 43px;
   padding: 10px 12px;
@@ -1045,26 +1166,47 @@ img {
   font-size: 12px;
 }
 
-.donor-fields input {
+.donor-fields input,
+.donor-fields textarea {
   margin: 7px 0 15px;
   border: 1px solid #dce3eb;
 }
 
+.donor-fields textarea {
+  min-height: 105px;
+  resize: vertical;
+  font: inherit;
+}
+
 .amount-input-wrap:focus-within,
-.donor-fields input:focus {
+.donor-fields input:focus,
+.donor-fields textarea:focus {
   border-color: var(--blue);
   box-shadow: 0 0 0 3px rgba(40, 87, 137, 0.1);
+}
+
+.form-honeypot {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
 }
 
 .donation-submit {
   width: 100%;
   color: white;
-  background: #8295aa;
-  cursor: not-allowed;
+  background: var(--navy);
+  cursor: pointer;
 }
 
 .donation-submit:disabled {
-  opacity: 1;
+  opacity: 0.72;
+  cursor: wait;
+}
+
+.donation-submit:not(:disabled):hover {
+  background: var(--blue);
 }
 
 .donation-unavailable {
@@ -1075,18 +1217,32 @@ img {
   line-height: 1.65;
 }
 
-.donation-security {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin: 15px 0 0;
-  color: #8793a1;
-  font-size: 10px;
+.form-status {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: 7px;
+  font-size: 12px;
+  line-height: 1.6;
 }
 
-.donation-security svg {
-  flex: 0 0 auto;
+.form-status.success {
+  color: #17613e;
+  background: #eaf7ef;
+}
+
+.form-status.info {
+  color: #274d70;
+  background: #edf4fa;
+}
+
+.form-status.error {
+  color: #8e2e2e;
+  background: #fff0f0;
+}
+
+.form-status a {
+  color: inherit;
+  font-weight: 700;
 }
 
 .footer {

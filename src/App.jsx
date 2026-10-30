@@ -9,9 +9,8 @@ import {
   X,
   MapPin,
   Mail,
+  Copy,
   HandHeart,
-  LockKeyhole,
-  CreditCard,
   Check,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -131,7 +130,7 @@ function WorkDetailPage({ work, onAction }) {
             <ul>{work.focusAreas.map((focus) => <li key={focus}>{focus}</li>)}</ul>
             <p className="work-detail-note">{work.detailNote ?? "These are current focus areas; activities depend on available resources and community needs."}</p>
             <div className="work-detail-actions">
-              <a className="button button-primary" href={work.actionHref ?? "/#donate"} onClick={(event) => onAction(event, work.actionHref ?? "/#donate")}>{work.actionType === "contact" ? <HandHeart size={17} /> : <Heart size={17} />} {work.actionLabel ?? "Donate to NEHOSA"}</a>
+              <a className="button button-primary" href={work.actionHref ?? "/#payment-options"} onClick={(event) => onAction(event, work.actionHref ?? "/#payment-options")}>{work.actionType === "contact" ? <HandHeart size={17} /> : <Heart size={17} />} {work.actionLabel ?? "Donate to NEHOSA"}</a>
               <a className="work-detail-home" href="/#home">Return to home</a>
             </div>
           </div>
@@ -144,12 +143,47 @@ function WorkDetailPage({ work, onAction }) {
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeHeroImage, setActiveHeroImage] = useState(0);
-  const [donationAmount, setDonationAmount] = useState("25000");
-  const [donationFrequency, setDonationFrequency] = useState("Once");
+  const [copiedPaymentDetail, setCopiedPaymentDetail] = useState("");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("bank");
+  const [donationEnquiryStatus, setDonationEnquiryStatus] = useState("idle");
   const [selectedWork, setSelectedWork] = useState(getWorkFromLocation);
   const pendingSection = useRef(null);
 
   const closeMenu = () => setMenuOpen(false);
+
+  const handleDonationEnquirySubmit = async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    if (["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+      setDonationEnquiryStatus("local");
+      return;
+    }
+    setDonationEnquiryStatus("sending");
+    const formData = new FormData(form);
+    try {
+      const response = await fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(formData).toString(),
+      });
+      if (!response.ok) throw new Error("Form submission failed");
+      form.reset();
+      setDonationEnquiryStatus("sent");
+    } catch {
+      setDonationEnquiryStatus("error");
+    }
+  };
+
+  const copyPaymentDetail = async (label, value) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedPaymentDetail(label);
+      window.setTimeout(() => setCopiedPaymentDetail(""), 1800);
+    } catch {
+      setCopiedPaymentDetail("error");
+      window.setTimeout(() => setCopiedPaymentDetail(""), 2500);
+    }
+  };
 
   const pageLink = (section) => selectedWork ? `/#${section}` : `#${section}`;
 
@@ -236,7 +270,7 @@ function App() {
             <a href={pageLink("about")} onClick={closeMenu}>About us</a>
             <a href={pageLink("work")} onClick={closeMenu}>Our work</a>
             <a href={pageLink("involved")} onClick={closeMenu}>Get involved</a>
-            <a className="nav-donate" href={pageLink("donate")} onClick={closeMenu}>
+            <a className="nav-donate" href={pageLink("payment-options")} onClick={closeMenu}>
               <Heart size={16} /> Donate
             </a>
           </nav>
@@ -439,58 +473,93 @@ function App() {
               </p>
               <div className="donation-impact-list">
                 <div><span><Check size={16} /></span><p><strong>Care that reaches further</strong><br />Every contribution helps NEHOSA advance its mission.</p></div>
-                <div><span><Check size={16} /></span><p><strong>Choose what works for you</strong><br />Give once or choose a monthly contribution.</p></div>
-                <div><span><Check size={16} /></span><p><strong>Secure payment setup</strong><br />Payments will be enabled after gateway configuration.</p></div>
+                <div><span><Check size={16} /></span><p><strong>Choose a convenient method</strong><br />Use mobile money or make a bank transfer.</p></div>
+                <div><span><Check size={16} /></span><p><strong>Tell us how you’d like to help</strong><br />NEHOSA can follow up about your donation enquiry.</p></div>
               </div>
-              <div className="gateway-note"><LockKeyhole size={17} /><span>Payment processing is not active yet. Your details are not being sent or stored.</span></div>
+              <div className="gateway-note"><Mail size={17} /><span>Share your contact details and a message so the NEHOSA team can respond.</span></div>
             </div>
 
-            <form className="donation-card" onSubmit={(event) => event.preventDefault()}>
-              <div className="donation-card-heading">
-                <span className="donation-card-icon"><Heart size={21} /></span>
-                <div><h3>Make a donation</h3><p>Choose an amount to support our work.</p></div>
-              </div>
-
-              <fieldset className="donation-frequency">
-                <legend>Gift frequency</legend>
-                {[
-                  { label: "Once", value: "Once" },
-                  { label: "Monthly", value: "Monthly" },
-                ].map((item) => (
-                  <button key={item.value} type="button" className={donationFrequency === item.value ? "frequency-option selected" : "frequency-option"} onClick={() => setDonationFrequency(item.value)} aria-pressed={donationFrequency === item.value}>
-                    {item.label}
-                  </button>
-                ))}
-              </fieldset>
-
-              <fieldset className="amount-fieldset">
-                <legend>Donation amount <span>(TZS)</span></legend>
-                <div className="amount-options">
-                  {[10000, 25000, 50000, 100000].map((amount) => (
-                    <button key={amount} type="button" className={donationAmount === String(amount) ? "amount-option selected" : "amount-option"} onClick={() => setDonationAmount(String(amount))} aria-pressed={donationAmount === String(amount)}>
-                      {amount.toLocaleString("en-TZ")}
+            <div className="donation-card">
+              <section className="payment-details" id="payment-options" aria-labelledby="payment-details-title">
+                <div className="donation-card-heading">
+                  <span className="donation-card-icon"><Heart size={21} /></span>
+                  <div><h3 id="payment-details-title">Choose how to donate</h3><p>Select a payment method to view its details.</p></div>
+                </div>
+                <div className="payment-method-options" role="group" aria-label="Donation payment method">
+                  {[
+                    { id: "bank", label: "Bank transfer" },
+                    { id: "mixx", label: "Mixx by Yas" },
+                    { id: "airtel", label: "Airtel Money" },
+                  ].map((method) => (
+                    <button
+                      key={method.id}
+                      type="button"
+                      className={selectedPaymentMethod === method.id ? "payment-method-option selected" : "payment-method-option"}
+                      onClick={() => { setSelectedPaymentMethod(method.id); setCopiedPaymentDetail(""); }}
+                      aria-pressed={selectedPaymentMethod === method.id}
+                    >
+                      {method.label}
                     </button>
                   ))}
                 </div>
-                <label className="custom-amount-label" htmlFor="custom-amount">Or enter another amount</label>
-                <div className="amount-input-wrap"><span>TZS</span><input id="custom-amount" inputMode="numeric" type="number" min="1000" step="1000" placeholder="Enter amount" value={donationAmount} onChange={(event) => setDonationAmount(event.target.value)} required /></div>
-              </fieldset>
+                {selectedPaymentMethod && (() => {
+                  const details = {
+                    bank: { label: "NMB Bank", value: "23010125740", copyValue: "23010125740", lines: [["Account name", "New Hope for Women and Youth"], ["SWIFT code", "NMIBTZTZ"]], copyLabel: "Copy account number" },
+                    airtel: { label: "Airtel Money", value: "0685477066", lines: [["Payment number", "0685477066"], ["Recipient name", "Alnjemvwa Njowela"]], copyLabel: "Copy number" },
+                    mixx: { label: "Mixx by Yas", value: "0657339983", lines: [["Payment number", "0657339983"], ["Recipient name", "Alnjemvwa Njowela"]], copyLabel: "Copy number" },
+                  }[selectedPaymentMethod];
+                  return (
+                    <div className="payment-detail-panel" aria-live="polite">
+                      <div className="payment-detail-panel-copy">
+                        <strong>{details.label}</strong>
+                        {details.lines.map(([label, value]) => <p key={label}><span>{label}</span><b>{value}</b></p>)}
+                        {selectedPaymentMethod === "bank" && <p><span>Account number</span><b>{details.value}</b></p>}
+                      </div>
+                      <button type="button" className="copy-payment-button" onClick={() => copyPaymentDetail(selectedPaymentMethod, details.copyValue ?? details.value)}>
+                        {copiedPaymentDetail === selectedPaymentMethod ? <Check size={16} /> : <Copy size={16} />}
+                        {copiedPaymentDetail === selectedPaymentMethod ? "Copied" : details.copyLabel}
+                      </button>
+                    </div>
+                  );
+                })()}
+                {copiedPaymentDetail === "error" && <p className="form-status info" role="status">Copy was unavailable. Select and copy the number manually.</p>}
+              </section>
 
-              <div className="donor-fields">
-                <label htmlFor="donor-name">Your name <span>(optional)</span></label>
-                <input id="donor-name" name="name" type="text" autoComplete="name" placeholder="Name" />
-                <label htmlFor="donor-email">Email address <span>(optional)</span></label>
-                <input id="donor-email" name="email" type="email" autoComplete="email" placeholder="you@example.com" />
-                <label htmlFor="donor-phone">Mobile money number <span>(optional)</span></label>
-                <input id="donor-phone" name="phone" type="tel" autoComplete="tel" placeholder="+255…" />
+              <form
+              className="donation-enquiry-form"
+              name="donation-enquiry"
+              method="POST"
+              data-netlify="true"
+              data-netlify-honeypot="bot-field"
+              onSubmit={handleDonationEnquirySubmit}
+            >
+              <input type="hidden" name="form-name" value="donation-enquiry" />
+              <div className="form-honeypot" aria-hidden="true">
+                <label>Leave this field empty<input name="bot-field" tabIndex="-1" autoComplete="off" /></label>
               </div>
-
-              <button className="button donation-submit" type="submit" disabled>
-                <CreditCard size={18} /> Continue to Pesapal
+              <div className="donation-card-heading">
+                <span className="donation-card-icon"><Heart size={21} /></span>
+                <div><h3>Contact us about your donation</h3><p>Leave your details or a message for the NEHOSA team.</p></div>
+              </div>
+              <div className="donor-fields">
+                <label htmlFor="donor-name">Your name</label>
+                <input id="donor-name" name="name" type="text" autoComplete="name" placeholder="Name" required />
+                <label htmlFor="donor-email">Email address</label>
+                <input id="donor-email" name="email" type="email" autoComplete="email" placeholder="you@example.com" required />
+                <label htmlFor="donor-phone">Phone number</label>
+                <input id="donor-phone" name="phone" type="tel" autoComplete="tel" placeholder="+255…" required />
+                <label htmlFor="donor-message">Message or donation details</label>
+                <textarea id="donor-message" name="message" rows="4" placeholder="Tell us how you would like to support NEHOSA or ask a question." required />
+              </div>
+              <button className="button donation-submit" type="submit" disabled={donationEnquiryStatus === "sending"}>
+                {donationEnquiryStatus === "sending" ? "Sending…" : "Send donation enquiry"}
               </button>
-              <p className="donation-unavailable">Online donations are coming soon. Pesapal checkout will be connected here after merchant setup is complete.</p>
-              <p className="donation-security"><LockKeyhole size={14} /> Secure payment processing will be provided by the configured gateway.</p>
-            </form>
+              {donationEnquiryStatus === "sent" && <p className="form-status success" role="status">Thank you. Your enquiry has been submitted. The NEHOSA team can now review your message.</p>}
+              {donationEnquiryStatus === "local" && <p className="form-status info" role="status">This is a local preview. The form will send enquiries after the site is deployed on Netlify and its email notification is configured.</p>}
+              {donationEnquiryStatus === "error" && <p className="form-status error" role="alert">We could not send your enquiry. Please try again or email <a href="mailto:foryouthnewhope@gmail.com">foryouthnewhope@gmail.com</a>.</p>}
+              <p className="donation-unavailable">This form sends an enquiry only; it does not take or confirm a payment.</p>
+              </form>
+            </div>
           </div>
         </section>
           </>
@@ -518,7 +587,7 @@ function App() {
             <a href={pageLink("about")}>About us</a>
             <a href={pageLink("work")}>Our work</a>
             <a href={pageLink("involved")}>Get involved</a>
-            <a href={pageLink("donate")}>Donate</a>
+            <a href={pageLink("payment-options")}>Donate</a>
           </div>
 
           <div className="footer-contact">
