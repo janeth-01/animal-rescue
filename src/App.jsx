@@ -613,6 +613,9 @@ function App() {
               </a>
             </p>
             <p>
+              <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M13.5 21v-8.2h2.8l.4-3.2h-3.2V7.5c0-.9.3-1.5 1.6-1.5h1.7V3.1c-.3 0-1.4-.1-2.7-.1-2.7 0-4.5 1.6-4.5 4.6v2h-3v3.2h3V21h3.9Z" />
+              </svg>
               <a href="https://www.facebook.com/share/1d9dxHAGqj/" target="_blank" rel="noreferrer">
                 Facebook: New Hope for Society and Animals
               </a>
