@@ -592,7 +592,7 @@ function App() {
 
           <div className="footer-contact">
             <h3>Get in touch</h3>
-            <p><MapPin size={17} /> Ilala, Dar Es Salaam, Tanzania</p>
+            <p><MapPin size={17} /> Wilaya ya Mbozi, Songwe, Tanzania</p>
             <p><Mail size={17} /> <a href="mailto:foryouthnewhope@gmail.com" style={{ color: "inherit" }}>foryouthnewhope@gmail.com</a></p>
             <p>
               <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24">
